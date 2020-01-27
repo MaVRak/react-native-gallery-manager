@@ -100,8 +100,8 @@ RCT_EXPORT_METHOD(getAssets:(NSDictionary *)params
   {
     PHFetchOptions *albumFetchOptions = [[PHFetchOptions alloc] init];
     albumFetchOptions.predicate = [NSPredicate predicateWithFormat:@"title = %@", albumName];
-    __block PHAssetCollection *collection = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeAlbum
-                                                                                     subtype:PHAssetCollectionSubtypeAny
+    __block PHAssetCollection *collection = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum
+                                                                                     subtype:PHAssetCollectionSubtypeSmartAlbumUserLibrary
                                                                                      options:albumFetchOptions].firstObject;
     fetchResults = [PHAsset fetchAssetsInAssetCollection:collection options:fetchOptions];
   }
@@ -174,7 +174,10 @@ RCT_EXPORT_METHOD(getAlbums: (RCTPromiseResolveBlock)resolve
 //  PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
 //  fetchOptions.wantsIncrementalChangeDetails = YES;
 //  fetchOptions.predicate = [NSPredicate predicateWithFormat:@"mediaType == %d",PHAssetMediaTypeImage];
-  PHFetchResult<PHAssetCollection *> * _Nonnull albums = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum subtype:PHAssetCollectionSubtypeAlbumRegular options:nil];
+  PHFetchResult<PHAssetCollection *> * _Nonnull albums = [PHAssetCollection
+                                                          fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum
+                                                                                subtype:PHAssetCollectionSubtypeSmartAlbumUserLibrary
+                                                                                options:nil];
   
   NSMutableArray<NSDictionary<NSString *, id> *> *result = [NSMutableArray new];
   [albums enumerateObjectsUsingBlock:^(PHAssetCollection * _Nonnull album, NSUInteger index, BOOL * _Nonnull stop) {
