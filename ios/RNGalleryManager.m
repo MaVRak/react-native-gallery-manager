@@ -98,17 +98,15 @@ RCT_EXPORT_METHOD(getAssets:(NSDictionary *)params
   PHFetchResult<PHAsset *> * _Nonnull fetchResults;
   if (![albumIdentifier isEqualToString:@""])
   {
-//    PHFetchOptions *albumFetchOptions = [[PHFetchOptions alloc] init];
-//    albumFetchOptions.predicate = [NSPredicate predicateWithFormat:@"title = %@", albumName];
-//    __block PHAssetCollection *collection = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum
-//                                                                                     subtype:PHAssetCollectionSubtypeSmartAlbumUserLibrary
-//                                                                                     options:albumFetchOptions].firstObject;
-      __block PHAssetCollection *collection = [PHAssetCollection fetchAssetCollectionsWithLocalIdentifiers:@[albumIdentifier] options:nil].firstObject;
-    fetchResults = [PHAsset fetchAssetsInAssetCollection:collection options:nil];
+    __block PHAssetCollection *collection = [PHAssetCollection fetchAssetCollectionsWithLocalIdentifiers:@[albumIdentifier] options:nil].firstObject;
+   
+    PHFetchOptions *onlyImagesOptions = [PHFetchOptions new];
+    onlyImagesOptions.predicate = [NSPredicate predicateWithFormat:@"mediaType = %i", PHAssetMediaTypeImage];
+    
+    fetchResults = [PHAsset fetchAssetsInAssetCollection:collection options:onlyImagesOptions];
   }
   else
   {
-    
     fetchResults = [PHAsset fetchAssetsWithOptions:fetchOptions]; // get the assets
   }
   
@@ -172,27 +170,48 @@ RCT_EXPORT_METHOD(getAlbums: (RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
   checkPhotoLibraryConfig(); // check if the permission is set in info.plist
-//  PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
-//  fetchOptions.wantsIncrementalChangeDetails = YES;
-//  fetchOptions.predicate = [NSPredicate predicateWithFormat:@"mediaType == %d",PHAssetMediaTypeImage];
+  PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
+  fetchOptions.predicate = [NSPredicate predicateWithFormat:@"estimatedAssetCount > 0"];
+  
   PHFetchResult<PHAssetCollection *> * _Nonnull albums = [PHAssetCollection
                                                           fetchAssetCollectionsWithType:PHAssetCollectionTypeAlbum
                                                                                 subtype:PHAssetCollectionSubtypeAny
-                                                                                options:nil];
+                                                                                options:fetchOptions];
+  
+  PHFetchResult<PHAssetCollection *> * _Nonnull smartAlbums = [PHAssetCollection
+                                                          fetchAssetCollectionsWithType:PHAssetCollectionTypeSmartAlbum
+                                                                                subtype:PHAssetCollectionSubtypeAlbumRegular
+                                                                                options:fetchOptions];
   
   NSMutableArray<NSDictionary<NSString *, id> *> *result = [NSMutableArray new];
+  
+  PHFetchOptions *onlyImagesOptions = [PHFetchOptions new];
+  onlyImagesOptions.predicate = [NSPredicate predicateWithFormat:@"mediaType = %i", PHAssetMediaTypeImage];
+  
   [albums enumerateObjectsUsingBlock:^(PHAssetCollection * _Nonnull album, NSUInteger index, BOOL * _Nonnull stop) {
+    PHFetchResult *assetsFetchResult = [PHAsset fetchAssetsInAssetCollection:album options:onlyImagesOptions];
     [result addObject:@{
                         @"title": [album localizedTitle],
-                        @"assetCount": @([album estimatedAssetCount]),
-                        @"albumIdentifier": [album localIdentifier]
+                        @"assetCount": [assetsFetchResult count],
+                        @"albumIdentifier": [album localIdentifier],
+                        @"previewImage": [assetsFetchResult firstObject]
+                        }];
+  }];
+  
+  [smartAlbums enumerateObjectsUsingBlock:^(PHAssetCollection * _Nonnull album, NSUInteger index, BOOL * _Nonnull stop) {
+    PHFetchResult *assetsFetchResult = [PHAsset fetchAssetsInAssetCollection:album options:onlyImagesOptions];
+    [result addObject:@{
+                        @"title": [album localizedTitle],
+                        @"assetCount": [assetsFetchResult count],
+                        @"albumIdentifier": [album localIdentifier],
+                        @"previewImage": [assetsFetchResult firstObject]
                         }];
   }];
   
   resolve(
           @{
             @"albums": result,
-            @"totalAlbums": @(albums.count)
+            @"totalAlbums": @(result.count)
             }
           );
   
