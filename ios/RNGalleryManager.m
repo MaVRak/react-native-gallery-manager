@@ -172,7 +172,7 @@ RCT_EXPORT_METHOD(getAlbums: (RCTPromiseResolveBlock)resolve
 {
   checkPhotoLibraryConfig(); // check if the permission is set in info.plist
   PHFetchOptions *fetchOptions = [[PHFetchOptions alloc] init];
-  PHFetchResult<PHAssetCollection *> * _Nonnull albums = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionTypeAlbum subtype:PHAssetCollectionSubtypeAny options:fetchOptions];
+  PHFetchResult<PHAssetCollection *> * _Nonnull albums = [PHAssetCollection fetchAssetCollectionsWithType:PHAssetCollectionSubtypeSmartAlbumUserLibrary subtype:PHAssetCollectionSubtypeSmartAlbumUserLibrary options:fetchOptions];
   
   NSMutableArray<NSDictionary<NSString *, id> *> *result = [NSMutableArray new];
   [albums enumerateObjectsUsingBlock:^(PHAssetCollection * _Nonnull album, NSUInteger index, BOOL * _Nonnull stop) {
